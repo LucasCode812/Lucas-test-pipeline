@@ -57,10 +57,21 @@ jobs:
             exit 1
           fi
 
+  wait-for-approval:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' }}
+    steps:
+      - name: Wait for approval
+        uses: styfle/approve-action@v2.3.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          message: 'Click the Approve button to deploy to production'
+
   deploy-prod:
     runs-on: ubuntu-latest
     environment: prod
-    needs: [deploy-test]
+    needs: [wait-for-approval]
+    if: github.event_name == 'workflow_dispatch' || needs.wait-for-approval.result == 'approved'
 
     steps:
       - name: Put server 2 in maintenance mode (production_server)
