@@ -57,23 +57,18 @@ jobs:
             exit 1
           fi
 
-  wait-for-approval:
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' }}
-    steps:
-      - name: Wait for approval
-        uses: styfle/approve-action@v2.3.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          message: 'Click the Approve button to deploy to production'
-
   deploy-prod:
     runs-on: ubuntu-latest
     environment: prod
-    needs: [wait-for-approval]
-    if: github.event_name == 'workflow_dispatch' || needs.wait-for-approval.result == 'approved'
+    needs: [deploy-test]
 
     steps:
+      - name: Wait for approval
+        uses: pullreminders/approval-action@v2.3.0
+        id: approval
+        with:
+          message: 'Please review and approve the deployment to production'
+
       - name: Put server 2 in maintenance mode (production_server)
         uses: appleboy/ssh-action@v0.1.8
         with:
