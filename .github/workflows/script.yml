@@ -53,10 +53,10 @@ jobs:
           script: |
             echo ${{secrets.PAT}}
             cd /var/www/html
-            rm -rf *
+            sudo rm -rf *
             git clone https://${{secrets.PAT}}@github.com/LucasCode812/Lucas-test-pipeline.git
-            mv /var/www/html/Lucas-test-pipeline/* /var/www/html/
-            rm -rf ./Lucas-test-pipeline/
+            sudo mv /var/www/html/Lucas-test-pipeline/* /var/www/html/
+            sudo rm -rf ./Lucas-test-pipeline/
 
       - name: Take server 1 out of maintenance mode
         uses: appleboy/ssh-action@v0.1.8
@@ -103,7 +103,7 @@ jobs:
           key: ${{ secrets.VM2_KEY }}
           script: |
             cd /var/www/html
-            rm -rf *
+            sudo rm -rf *
             git clone https://${{secrets.PAT}}@github.com/LucasCode812/Lucas-test-pipeline.git
-            mv /var/www/html/Lucas-test-pipeline/* /var/www/html/
-            rm -rf ./Lucas-test-pipeline/
+            sudo mv /var/www/html/Lucas-test-pipeline/* /var/www/html/
+            sudo rm -rf ./Lucas-test-pipeline/
