@@ -65,7 +65,7 @@ jobs:
     steps:
       - uses: trstringer/manual-approval@v1
         with:
-          secret: ${{ github.TOKEN }}
+          secret: ${{secrets.PAT}}
           approvers: LucasCode812
 
       - name: Put server 2 in maintenance mode (production_server)
