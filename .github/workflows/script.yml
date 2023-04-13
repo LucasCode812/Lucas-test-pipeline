@@ -9,7 +9,7 @@ jobs:
   # Laatste ubuntu versie
   deploy-test:
     runs-on: ubuntu-latest
-    environment: test
+    environment: Development
 
     steps:
       # De code wordt gecheckt voor fouten.
@@ -68,9 +68,9 @@ jobs:
           fi
 
   # Naar productie server deployen.
-  deploy-prod:
+  deploy-productie:
     runs-on: ubuntu-latest
-    environment: prod
+    environment: productie
     needs: [deploy-test]
 
     # Voordat deze stap begint wordt er om een manual-approval gevraagd.
