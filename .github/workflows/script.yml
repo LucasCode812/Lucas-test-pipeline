@@ -1,24 +1,110 @@
-# This is a basic workflow to help you get started with Actions
+name: Deploy Website
 
-name: Python script
-
-# Controls when the workflow will run
 on:
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+  push:
+    branches: [ main ]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  deploy-test:
     runs-on: ubuntu-latest
+    environment: test
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      # Runs a single command using the runners shell
-      - name: Run a Python script
-        run: python .github/workflows/test.py
+    - name: Take server 2 out of maintenance mode
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.VM2_HOST }}
+        username: ${{ secrets.VM2_USERNAME }}
+        password: ${{ secrets.VM2_PASSWORD }}
+        script: |
+          sudo ufw allow 80
+          sudo ufw allow 443
+          sudo ufw status
+
+    - name: Test server 2
+      run: |
+        response=$(curl -I ${{ secrets.VM2_HOST }} | head -n 1 | cut -d$' ' -f2)
+        if [[ $response -ne 200 ]]; then
+          echo "Error: Server 2 returned status code $response"
+          exit 1
+        fi
+
+    # Update and test server 1
+    - name: Put server 1 in maintenance mode
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.VM1_HOST  }}
+        username: ${{ secrets.VM1_USERNAME  }}
+        password: ${{ secrets.VM1_PASSWORD  }}
+        script: |
+          sudo ufw deny 80
+          sudo ufw deny 443
+          sudo ufw status
+
+    - name: Deploy to server 1
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.VM1_HOST  }}
+        username: ${{ secrets.VM1_USERNAME  }}
+        password: ${{ secrets.VM1_PASSWORD  }}
+        script: |
+          echo ${{secrets.PAT}}
+          cd /var/www/html
+          rm -rf *
+          git clone https://${{secrets.PAT}}@github.com/HerrForehead/migration-support-services-code.git
+          mv /var/www/html/migration-support-services-code/* /var/www/html/
+          rm -rf ./migration-support-services-code/
+
+    - name: Take server 1 out of maintenance mode
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.VM1_HOST  }}
+        username: ${{ secrets.VM1_USERNAME  }}
+        password: ${{ secrets.VM1_PASSWORD  }}
+        script: |
+          sudo ufw allow 80
+          sudo ufw allow 443
+          sudo ufw status
+
+    - name: Test server 1
+      run: |
+        response=$(curl -I ${{ secrets.VM1_HOST  }} | head -n 1 | cut -d$' ' -f2)
+        if [[ $response -ne 200 ]]; then
+          echo "Error: Server 1 returned status code $response"
+          exit 1
+        fi
+  
+  deploy-prod:
+    runs-on: ubuntu-latest
+    environment: prod
+    needs: [deploy-test]
+
+    steps:
+
+    # Update and test server 2
+    - name: Put server 2 in maintenance mode
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.VM2_HOST }}
+        username: ${{ secrets.VM2_USERNAME  }}
+        password: ${{ secrets.VM2_PASSWORD }}
+        script: |
+          sudo ufw deny 80
+          sudo ufw deny 443
+          sudo ufw status
+
+    - name: Deploy to server 2
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.VM2_HOST }}
+        username: ${{ secrets.VM2_USERNAME  }}
+        password: ${{ secrets.VM2_PASSWORD }}
+        script: |
+          cd /var/www/html
+          rm -rf *
+          git clone https://${{secrets.PAT}}@github.com/HerrForehead/migration-support-services-code.git
+          mv /var/www/html/migration-support-services-code/* /var/www/html/
+          rm -rf ./migration-support-services-code/
