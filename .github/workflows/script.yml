@@ -63,11 +63,10 @@ jobs:
     needs: [deploy-test]
 
     steps:
-      - name: Wait for manual approval
-        uses: actions/wait-for-user-input@v2
-        id: approval
+      - uses: trstringer/manual-approval@v1
         with:
-          prompt: 'Please approve the deployment to production.'
+          secret: ${{ github.TOKEN }}
+          approvers: LucasCode812
 
       - name: Put server 2 in maintenance mode (production_server)
         uses: appleboy/ssh-action@v0.1.8
@@ -122,9 +121,3 @@ jobs:
             sudo ufw deny 80
             sudo ufw deny 443
             sudo ufw status
-
-      - name: Wait for successful deployment
-        if: success()
-        uses: actions/wait-for-user-input@v2
-        with:
-          prompt: 'Deployment to production was successful.'
