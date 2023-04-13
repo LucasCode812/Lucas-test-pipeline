@@ -1,4 +1,4 @@
-name: Deploy Website
+name: Deploy Website Test --> Production
 
 on:
   push:
@@ -13,27 +13,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Take server 2 out of maintenance mode
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.VM2_HOST }}
-          username: ${{ secrets.VM2_USERNAME }}
-          key: ${{ secrets.VM2_KEY }}
-          script: |
-            sudo ufw allow 80
-            sudo ufw allow 443
-            sudo ufw status
-
-      - name: Test server 2
-        run: |
-          response=$(curl -I ${{ secrets.VM2_HOST }} | head -n 1 | cut -d$' ' -f2)
-          if [[ $response -ne 200 ]]; then
-            echo "Error: Server 2 returned status code $response"
-            exit 1
-          fi
-
-      # Update and test server 1
-      - name: Put server 1 in maintenance mode
+      - name: Put server 1 in maintenance mode (test_server)
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.VM1_HOST  }}
@@ -44,7 +24,7 @@ jobs:
             sudo ufw deny 443
             sudo ufw status
 
-      - name: Deploy to server 1
+      - name: Deploy to server 1 (test_server)
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.VM1_HOST  }}
@@ -58,7 +38,7 @@ jobs:
             sudo mv /var/www/html/Lucas-test-pipeline/* /var/www/html/
             sudo rm -rf ./Lucas-test-pipeline/
 
-      - name: Take server 1 out of maintenance mode
+      - name: Take server 1 (test_server) out of maintenance mode
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.VM1_HOST  }}
@@ -69,7 +49,7 @@ jobs:
             sudo ufw allow 443
             sudo ufw status
 
-      - name: Test server 1
+      - name: Test server 1 (test_server)
         run: |
           response=$(curl -I ${{ secrets.VM1_HOST  }} | head -n 1 | cut -d$' ' -f2)
           if [[ $response -ne 200 ]]; then
@@ -83,8 +63,7 @@ jobs:
     needs: [deploy-test]
 
     steps:
-      # Update and test server 2
-      - name: Put server 2 in maintenance mode
+      - name: Put server 2 in maintenance mode (production_server)
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.VM2_HOST }}
@@ -95,7 +74,7 @@ jobs:
             sudo ufw deny 443
             sudo ufw status
 
-      - name: Deploy to server 2
+      - name: Deploy to server 2 (production_server)
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.VM2_HOST }}
@@ -107,3 +86,33 @@ jobs:
             sudo git clone https://${{secrets.PAT}}@github.com/LucasCode812/Lucas-test-pipeline.git
             sudo mv /var/www/html/Lucas-test-pipeline/* /var/www/html/
             sudo rm -rf ./Lucas-test-pipeline/
+
+      - name: Put server 2 in maintenance mode (production_server)
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VM2_HOST }}
+          username: ${{ secrets.VM2_USERNAME  }}
+          key: ${{ secrets.VM2_KEY }}
+          script: |
+            sudo ufw allow 80
+            sudo ufw allow 443
+            sudo ufw status
+
+      - name: Test server 2 (production_server)
+        run: |
+          response=$(curl -I ${{ secrets.VM2_HOST }} | head -n 1 | cut -d$' ' -f2)
+          if [[ $response -ne 200 ]]; then
+            echo "Error: Server 2 returned status code $response"
+            exit 1
+          fi
+
+      - name: Put server 1 in paused mode (test_server)
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VM1_HOST }}
+          username: ${{ secrets.VM1_USERNAME  }}
+          key: ${{ secrets.VM1_KEY }}
+          script: |
+            sudo ufw deny 80
+            sudo ufw deny 443
+            sudo ufw status
