@@ -54,7 +54,7 @@ jobs:
             echo ${{secrets.PAT}}
             cd /var/www/html
             sudo rm -rf *
-            git clone https://${{secrets.PAT}}@github.com/LucasCode812/Lucas-test-pipeline.git
+            sudo git clone https://${{secrets.PAT}}@github.com/LucasCode812/Lucas-test-pipeline.git
             sudo mv /var/www/html/Lucas-test-pipeline/* /var/www/html/
             sudo rm -rf ./Lucas-test-pipeline/
 
@@ -104,6 +104,6 @@ jobs:
           script: |
             cd /var/www/html
             sudo rm -rf *
-            git clone https://${{secrets.PAT}}@github.com/LucasCode812/Lucas-test-pipeline.git
+            sudo git clone https://${{secrets.PAT}}@github.com/LucasCode812/Lucas-test-pipeline.git
             sudo mv /var/www/html/Lucas-test-pipeline/* /var/www/html/
             sudo rm -rf ./Lucas-test-pipeline/
