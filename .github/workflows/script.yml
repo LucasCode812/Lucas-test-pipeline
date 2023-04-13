@@ -54,7 +54,7 @@ jobs:
             echo ${{secrets.PAT}}
             cd /var/www/html
             rm -rf *
-            git clone https://${{secrets.PAT}}@github.com/HerrForehead/migration-support-services-code.git
+            git clone https://${{secrets.PAT}}@github.com/LucasCode812/Lucas-test-pipeline.git
             mv /var/www/html/migration-support-services-code/* /var/www/html/
             rm -rf ./migration-support-services-code/
 
@@ -104,6 +104,6 @@ jobs:
           script: |
             cd /var/www/html
             rm -rf *
-            git clone https://${{secrets.PAT}}@github.com/HerrForehead/migration-support-services-code.git
+            git clone https://${{secrets.PAT}}@github.com/LucasCode812/Lucas-test-pipeline.git
             mv /var/www/html/migration-support-services-code/* /var/www/html/
             rm -rf ./migration-support-services-code/
