@@ -92,7 +92,7 @@ jobs:
             sudo mv /var/www/html/Lucas-test-pipeline/* /var/www/html/
             sudo rm -rf ./Lucas-test-pipeline/
 
-      - name: Put server 2 in maintenance mode (production_server)
+      - name: Put server 2 out maintenance mode (production_server)
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.VM2_HOST }}
