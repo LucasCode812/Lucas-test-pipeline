@@ -2,7 +2,7 @@ name: Deploy Website
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   deploy-test:
@@ -10,101 +10,100 @@ jobs:
     environment: test
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Take server 2 out of maintenance mode
-      uses: appleboy/ssh-action@v0.1.8
-      with:
-        host: ${{ secrets.VM2_HOST }}
-        username: ${{ secrets.VM2_USERNAME }}
-        password: ${{ secrets.VM2_PASSWORD }}
-        script: |
-          sudo ufw allow 80
-          sudo ufw allow 443
-          sudo ufw status
+      - name: Take server 2 out of maintenance mode
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VM2_HOST }}
+          username: ${{ secrets.VM2_USERNAME }}
+          key: ${{ secrets.VM2_KEY }}
+          script: |
+            sudo ufw allow 80
+            sudo ufw allow 443
+            sudo ufw status
 
-    - name: Test server 2
-      run: |
-        response=$(curl -I ${{ secrets.VM2_HOST }} | head -n 1 | cut -d$' ' -f2)
-        if [[ $response -ne 200 ]]; then
-          echo "Error: Server 2 returned status code $response"
-          exit 1
-        fi
+      - name: Test server 2
+        run: |
+          response=$(curl -I ${{ secrets.VM2_HOST }} | head -n 1 | cut -d$' ' -f2)
+          if [[ $response -ne 200 ]]; then
+            echo "Error: Server 2 returned status code $response"
+            exit 1
+          fi
 
-    # Update and test server 1
-    - name: Put server 1 in maintenance mode
-      uses: appleboy/ssh-action@v0.1.8
-      with:
-        host: ${{ secrets.VM1_HOST  }}
-        username: ${{ secrets.VM1_USERNAME  }}
-        password: ${{ secrets.VM1_PASSWORD  }}
-        script: |
-          sudo ufw deny 80
-          sudo ufw deny 443
-          sudo ufw status
+      # Update and test server 1
+      - name: Put server 1 in maintenance mode
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VM1_HOST  }}
+          username: ${{ secrets.VM1_USERNAME  }}
+          key: ${{ secrets.VM1_KEY }}
+          script: |
+            sudo ufw deny 80
+            sudo ufw deny 443
+            sudo ufw status
 
-    - name: Deploy to server 1
-      uses: appleboy/ssh-action@v0.1.8
-      with:
-        host: ${{ secrets.VM1_HOST  }}
-        username: ${{ secrets.VM1_USERNAME  }}
-        password: ${{ secrets.VM1_PASSWORD  }}
-        script: |
-          echo ${{secrets.PAT}}
-          cd /var/www/html
-          rm -rf *
-          git clone https://${{secrets.PAT}}@github.com/HerrForehead/migration-support-services-code.git
-          mv /var/www/html/migration-support-services-code/* /var/www/html/
-          rm -rf ./migration-support-services-code/
+      - name: Deploy to server 1
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VM1_HOST  }}
+          username: ${{ secrets.VM1_USERNAME  }}
+          key: ${{ secrets.VM1_KEY }}
+          script: |
+            echo ${{secrets.PAT}}
+            cd /var/www/html
+            rm -rf *
+            git clone https://${{secrets.PAT}}@github.com/HerrForehead/migration-support-services-code.git
+            mv /var/www/html/migration-support-services-code/* /var/www/html/
+            rm -rf ./migration-support-services-code/
 
-    - name: Take server 1 out of maintenance mode
-      uses: appleboy/ssh-action@v0.1.8
-      with:
-        host: ${{ secrets.VM1_HOST  }}
-        username: ${{ secrets.VM1_USERNAME  }}
-        password: ${{ secrets.VM1_PASSWORD  }}
-        script: |
-          sudo ufw allow 80
-          sudo ufw allow 443
-          sudo ufw status
+      - name: Take server 1 out of maintenance mode
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VM1_HOST  }}
+          username: ${{ secrets.VM1_USERNAME  }}
+          key: ${{ secrets.VM1_KEY }}
+          script: |
+            sudo ufw allow 80
+            sudo ufw allow 443
+            sudo ufw status
 
-    - name: Test server 1
-      run: |
-        response=$(curl -I ${{ secrets.VM1_HOST  }} | head -n 1 | cut -d$' ' -f2)
-        if [[ $response -ne 200 ]]; then
-          echo "Error: Server 1 returned status code $response"
-          exit 1
-        fi
-  
+      - name: Test server 1
+        run: |
+          response=$(curl -I ${{ secrets.VM1_HOST  }} | head -n 1 | cut -d$' ' -f2)
+          if [[ $response -ne 200 ]]; then
+            echo "Error: Server 1 returned status code $response"
+            exit 1
+          fi
+
   deploy-prod:
     runs-on: ubuntu-latest
     environment: prod
     needs: [deploy-test]
 
     steps:
+      # Update and test server 2
+      - name: Put server 2 in maintenance mode
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VM2_HOST }}
+          username: ${{ secrets.VM2_USERNAME  }}
+          key: ${{ secrets.VM2_KEY }}
+          script: |
+            sudo ufw deny 80
+            sudo ufw deny 443
+            sudo ufw status
 
-    # Update and test server 2
-    - name: Put server 2 in maintenance mode
-      uses: appleboy/ssh-action@v0.1.8
-      with:
-        host: ${{ secrets.VM2_HOST }}
-        username: ${{ secrets.VM2_USERNAME  }}
-        password: ${{ secrets.VM2_PASSWORD }}
-        script: |
-          sudo ufw deny 80
-          sudo ufw deny 443
-          sudo ufw status
-
-    - name: Deploy to server 2
-      uses: appleboy/ssh-action@v0.1.8
-      with:
-        host: ${{ secrets.VM2_HOST }}
-        username: ${{ secrets.VM2_USERNAME  }}
-        password: ${{ secrets.VM2_PASSWORD }}
-        script: |
-          cd /var/www/html
-          rm -rf *
-          git clone https://${{secrets.PAT}}@github.com/HerrForehead/migration-support-services-code.git
-          mv /var/www/html/migration-support-services-code/* /var/www/html/
-          rm -rf ./migration-support-services-code/
+      - name: Deploy to server 2
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VM2_HOST }}
+          username: ${{ secrets.VM2_USERNAME  }}
+          key: ${{ secrets.VM2_KEY }}
+          script: |
+            cd /var/www/html
+            rm -rf *
+            git clone https://${{secrets.PAT}}@github.com/HerrForehead/migration-support-services-code.git
+            mv /var/www/html/migration-support-services-code/* /var/www/html/
+            rm -rf ./migration-support-services-code/
